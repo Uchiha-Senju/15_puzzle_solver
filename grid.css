@@ -1,0 +1,27 @@
+#board {
+  display : grid;
+  grid-template-columns : repeat(4, 1fr);
+  grid-gap : 5px;
+  width: 80%;
+  padding: 0 10% 0 10%;
+  container-type : size;
+}
+
+.tile {
+  aspect-ratio: 1;
+  background-color: cadetblue;
+  border : 1cqw solid black;
+  border-radius : 2cqw;
+  container-type : size;
+}
+
+.tile-text {
+  /* To size text accroding to the tile */
+  font-size : 70cqw;
+
+  /* To shift text ot the center */
+  position: absolute;
+  top : 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}

@@ -11,15 +11,25 @@ function MakeBoard(w,h) {
   while (board.firstChild) {
     board.removeChild(board.lastChild);
   }
+  board.style.gridTemplateColumns = `repeat(${w}, 1fr)`;
+  board.style.gridTemplateRows    = `repeat(${h}, 1fr)`;
   tiles = Array(w);
   for (i = 0; i < w; i++) {
     tiles[i] = Array(h);
     for (j = 0; j < h; j++) {
       tile = document.createElement("div");
-      tile.idName = i + "-" + "j";
-      tile.textContent = `(${i}, ${j})`;
+      tile.id = i + "-" + j;
+      tile.className = "tile";
+
+      text_field = document.createElement("span");
+      // text_field.textContent = `(${i}, ${j})`;
+      text_field.textContent = (i * h + j + 1);
+      text_field.className = "tile-text";
+
+      tile.appendChild(text_field)
       tiles[i][j] = tile;
       board.appendChild(tile);
+      // window.fitText(tile);
     }
   }
 }
