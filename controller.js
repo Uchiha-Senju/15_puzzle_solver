@@ -3,7 +3,7 @@ var n_rows, n_cols;
 var blank_pos = [];
 var board_node = [];
 
-var getFunction
+const delay = ms => new Promise(res => setTimeout(res, ms));
 
 // document.window.onload = function(){console.log("doc window loaded")};
 // window.onload = function(){console.log("window loaded")};
@@ -18,24 +18,40 @@ window.addEventListener("DOMContentLoaded", (event) => {
   MakeBoard(4,4);
 });
 
-function processTileClick(cur_tile) {
+const processTileClick = async (cur_tile) => {
   cur_tile_pos = cur_tile.pos;
   if (Math.abs(cur_tile_pos[0] - blank_pos[0]) + Math.abs(cur_tile_pos[1] - blank_pos[1]) == 1) {
     console.log("next to blank")
     // blank_tile = tiles[blank_pos[0]][blank_pos[1]];
     blank_tile = getTileAt(blank_pos[0], blank_pos[1]);
     
+    // Trigger the animation in the correspoding direction
+    // Wait for it to finish, and then change the position
+    var temp = document.createComment('')
+    original_class = cur_tile.className
+    if (cur_tile_pos[0] - blank_pos[0] == 1) {
+      cur_tile.className += ' slide_up';
+    } else if (cur_tile_pos[0] - blank_pos[0] == -1) {
+      cur_tile.className += ' slide_down';
+    } else if (cur_tile_pos[1] - blank_pos[1] == 1) {
+      cur_tile.className += ' slide_left';
+    } else {
+      cur_tile.className += ' slide_right';
+    } 
+    await delay(100);
+    cur_tile.className = original_class;
+
     // temp = document.createElement("div");
     // temp.replaceChildren(cur_tile.children);
     // cur_tile.replaceChildren(blank_tile.children);
     // blank_tile.replaceChildren(temp.children);
     // Don't swap children, swap the nodes in DOM
-    var temp = document.createComment('')
     cur_tile.replaceWith(temp)
     blank_tile.replaceWith(cur_tile)
     temp.replaceWith(blank_tile)
 
-    // Swap in array. Defunct after replacement with function
+
+    // Swap in array. Defunct after replacing array with a yfunction
     // temp = tiles[blank_pos[0]][blank_pos[1]];
     // tiles[blank_pos[0]][blank_pos[1]] = tiles[cur_tile_pos[0]][cur_tile_pos[1]];
     // tiles[cur_tile_pos[0]][cur_tile_pos[1]] = temp;
@@ -72,6 +88,7 @@ function MakeBoard(w,h) {
       // tile.id = i + "-" + j;
       tile.pos = [i,j];
       tile.className = "tile";
+      tile.style.gridC
 
       text_field = document.createElement("span");
       // text_field.textContent = `(${i}, ${j})`;
