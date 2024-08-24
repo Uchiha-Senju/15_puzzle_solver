@@ -24,8 +24,8 @@ body {
 
 #controls {
   display : grid;
-  grid-template-columns : 2fr 2fr 1fr 1fr;
-  grid-gap : 1em;
+  grid-template-columns : 2fr 3fr 1fr 1fr;
+  grid-gap : 0.2em;
   max-width : 80vw;
   margin: 1vmin auto;
   margin-top: 3vmin;
