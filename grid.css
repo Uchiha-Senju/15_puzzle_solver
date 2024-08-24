@@ -2,8 +2,9 @@
   display : grid;
   grid-template-columns : repeat(4, 1fr);
   grid-gap : 5px;
-  width: 80%;
-  padding: 0 10% 0 10%;
+  max-width: 80vmin;
+  max-height: 80vmin;
+  padding: 3vmin calc( (100vw - 80vmin)/2 );
   container-type : size;
   -webkit-user-select: none; /* Safari */        
   -moz-user-select: none; /* Firefox */
@@ -11,9 +12,46 @@
   user-select: none; /* Standard */
 }
 
-@keyframes down { 100% { transform:translate(0,100%); } }
-@keyframes right { 100% { transform:translate(100%,0); } }
-@keyframes idle { 100% {} }
+#controls {
+  display : grid;
+  grid-template-columns : 2fr 2fr 1fr 1fr;
+  grid-gap : 1em;
+  max-width : 80vw;
+  padding: 3vmin 10%;
+  /* height: 10vh; */
+  /* container-type: size; */
+}
+
+#board_size_controls {
+  display: grid;
+  grid-template-areas: 'button button'
+                       'width height';
+  grid-gap: 0.5em;
+  justify-items: center;
+}
+#board_size_button {
+  grid-area: button;
+}
+
+#width_input #height_input {
+  width : 2em;
+}
+
+#timer_box {
+  width : 100%;
+  height : 100%;
+  container-type: size;
+  /* to justify center*/
+  display: grid;
+  justify-content: center;
+}
+
+#timer {
+  width : 100%;
+  height : 100%;
+  /* 25cqw was found using experimentation*/
+  font-size: min(80cqh, 25cqw);
+}
 
 .tile {
   aspect-ratio: 1;

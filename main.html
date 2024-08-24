@@ -18,7 +18,34 @@
     <!--[if lt IE 7]>
       <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="#">upgrade your browser</a> to improve your experience.</p>
     <![endif]-->
-    <button onclick="MakeBoard(4,4)">MakeBoard(4,4)</button>
+
+    <div id="controls">
+      <!-- Change board size -->
+      <div id="board_size_controls">
+        <button id="board_size_button"
+        onclick="MakeBoard(document.getElementById('width_input').value,document.getElementById('height_input').value)">
+          MakeBoard(w,h)
+        </button>
+        <div>
+          w = <input type="text" id="width_input" name="Board Width" pattern="[0-9]*" size="5"
+          placeholder="Width" title="No. of cells in the board in horizontal direction"
+          value="4">
+        </div>
+        <div>
+          h = <input type="text" id="height_input" name="Board Height" pattern="[0-9]*" size="5"
+          placeholder="Height" title="No. of cells in the board in Vertical direction"
+          value="4">
+        </div>
+      </div>
+      <!-- Timer -->
+      <div id="timer_box">
+        <div id="timer"></div>
+      </div>
+      <!-- Change board state -->
+      <button onclick="permuteBoard(); StartTimer();">Shuffle the Board</button>
+      <button onclick="solveBoard()">Solve the Board</button>
+    </div>
+    
     <div id="board">
     </div>
   </body>

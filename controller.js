@@ -1,7 +1,11 @@
 var n_rows, n_cols;
+var board_node = null;
+var timer_node = null;
+var interval_id = null;
+var timer_start_time = null;
+var timer_started = false;
 
 var blank_pos = [];
-var board_node = [];
 var solved_state_list = [];
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
@@ -12,26 +16,76 @@ const delay = ms => new Promise(res => setTimeout(res, ms));
 
 window.addEventListener("DOMContentLoaded", (event) => {
   board_node = document.getElementById("board");
+  timer_node = document.getElementById("timer");
   MakeBoard(4,4);
 });
+
+function UpdateTimer() {
+  time_diff = (new Date()).getTime() - timer_start_time;
+
+  milliseconds = time_diff % 1000;
+  time_diff_in_seconds = Math.floor(time_diff / 1000);
+
+  seconds = time_diff_in_seconds % 60;
+  time_diff_in_minutes = Math.floor(time_diff_in_seconds / 60);
+
+  minutes = time_diff_in_minutes % 60;
+  time_diff_in_hours = Math.floor(time_diff_in_minutes / 60);
+  
+  hours = time_diff_in_hours;
+
+  if (hours != 0) {
+    timer_node.textContent = hours + ':' + (minutes+'').padStart(2,'0') + ':' + (seconds+'').padStart(2,'0') + '.' + (milliseconds+'').padStart(3,'0')
+  } else if (minutes != 0) {
+    timer_node.textContent = minutes + ':' + (seconds+'').padStart(2,'0') + '.' + (milliseconds+'').padStart(3,'0')
+  } else if (seconds != 0) {
+    timer_node.textContent = seconds + '.' + (milliseconds+'').padStart(3,'0')
+  } else {
+    timer_node.textContent = `${milliseconds}ms`
+  }
+}
+
+function StartTimer() {
+  if (timer_started) {
+    clearInterval(interval_id);
+    timer_started = false;
+  }
+  timer_node.style.color = 'red';
+  timer_start_time = (new Date()).getTime();
+  interval_id = setInterval(UpdateTimer, 73);
+  timer_started = true;
+}
+
+function StopTimer() {
+  timer_node.style.color = 'green';
+  clearInterval(interval_id);
+}
+
 
 function getTileAt(i,j) {
   return board_node.children[n_cols * i + j];
 }
 
-function MakeBoard(w,h) {
-  board = document.getElementById("board");
+function MakeBoard(w,h) { 
+  w = parseInt(w)
+  h = parseInt(h)
+  if (! (Number.isInteger(w) && Number.isInteger(h)) ){
+    console.log('invalid input for board dimension, doing nothing');
+    return;
+  }
+
   // while (board.firstChild) {
   //   board.removeChild(board.lastChild);
   // }
   // Apparently replacing with empty is simpler
   // https://developer.mozilla.org/en-US/docs/Web/API/Element/replaceChildren#examples
-  board.replaceChildren();
+  board_node.replaceChildren();
 
-  board.style.gridTemplateColumns = `repeat(${w}, 1fr)`;
-  board.style.gridTemplateRows    = `repeat(${h}, 1fr)`;
+  board_node.style.gridTemplateColumns = `repeat(${w}, 1fr)`;
+  board_node.style.gridTemplateRows    = `repeat(${h}, 1fr)`;
   n_rows = h;
   n_cols = w;
+  solved_state_list = [];
   
   // tiles = Array(w);
   for (i = 0; i < w; i++) {
@@ -53,7 +107,7 @@ function MakeBoard(w,h) {
       // Extra layer to capture the `tile` variable to the scope, 
       // so it doesn't change (for the onclick) with the for loop
       tile.onclick = (x => function(){processTileClick(x);} )(tile);
-      board.appendChild(tile);
+      board_node.appendChild(tile);
       solved_state_list.push(tile);
       // window.fitText(tile);
     }
@@ -104,6 +158,9 @@ const processTileClick = async (cur_tile) => {
     cur_tile.pos = blank_pos;
     blank_tile.pos = cur_tile_pos;
     blank_pos = cur_tile_pos;
+    if (checkIfSolved()) {
+      StopTimer();
+    }
   } else {
     console.log("not next to blank");
   }
