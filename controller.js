@@ -57,8 +57,11 @@ function StartTimer() {
 }
 
 function StopTimer() {
-  timer_node.style.color = 'green';
-  clearInterval(interval_id);
+  if (timer_started) {
+    timer_node.style.color = 'green';
+    clearInterval(interval_id);
+    timer_started = false;
+  }
 }
 
 
@@ -273,6 +276,8 @@ function solveBoard() {
   for (var i = 0; i < n_tiles; i++) {
     board_node.appendChild(solved_state_list[i]);
   }
+  StopTimer();
+  timer_node.textContent = '';
 }
 
 function checkIfSolved() {
