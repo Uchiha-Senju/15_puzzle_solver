@@ -7,6 +7,7 @@ var timer_started = false;
 
 var blank_pos = [];
 var solved_state_list = [];
+var tile_is_clicked = false;
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
@@ -117,9 +118,16 @@ function MakeBoard(w,h) {
   }
   blank_pos = [h-1,w-1];
   getTileAt(h-1,w-1).style.visibility = "hidden";
+  tile_is_clicked = false;
 }
 
 const processTileClick = async (cur_tile) => {
+  if (tile_is_clicked == true) {
+    console.log("another tile is being processed, must disallow race conditions");
+    return;
+  } else {
+    tile_is_clicked = true;
+  }
   cur_tile_pos = cur_tile.pos;
   if (Math.abs(cur_tile_pos[0] - blank_pos[0]) + Math.abs(cur_tile_pos[1] - blank_pos[1]) == 1) {
     console.log("next to blank")
@@ -168,6 +176,7 @@ const processTileClick = async (cur_tile) => {
     console.log("not next to blank");
   }
   console.log(cur_tile_pos);
+  tile_is_clicked = false;
 }
 
 function generatePermutation(n) {
@@ -278,6 +287,7 @@ function solveBoard() {
   }
   StopTimer();
   timer_node.textContent = '';
+  tile_is_clicked = false;
 }
 
 function checkIfSolved() {
