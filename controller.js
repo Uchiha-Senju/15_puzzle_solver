@@ -500,61 +500,157 @@ async function solve_Board_step_by_step() {
     // and all # are solved. So cur_pos >= target_pos necessarily.
     // 
     // Only valid if the current_pos is not along the wall.
-    var loop = [];
-    var n_loops = 0;
-    if (cur_pos[1] > target_pos[1]) {
-      if (cur_pos[0] > target_pos[0]) {
+    if (target_pos[1] < n_cols - 1) {
+      var loop = [];
+      var n_loops = 0;
+      if (cur_pos[1] > target_pos[1]) {
+        if (cur_pos[0] > target_pos[0]) {
+          loop= [
+                  [target_pos[0], target_pos[1]], 
+                  [target_pos[0],    cur_pos[1]], 
+                  [   cur_pos[0],    cur_pos[1]], 
+                  [   cur_pos[0], target_pos[1]], 
+                ];
+          n_loops = (cur_pos[1] - target_pos[1]) + (cur_pos[0] - target_pos[0]) - 1
+        } else { // cur_pos[0] == target_pos[0]
+          loop= [
+                  [target_pos[0]    , target_pos[1]],
+                  [target_pos[0]    ,    cur_pos[1]], 
+                  [target_pos[0] + 1,    cur_pos[1]], 
+                  [target_pos[0] + 1, target_pos[1]],
+                ];
+          n_loops = (cur_pos[1] - target_pos[1]) - 1
+        }
+      } else if (cur_pos[1] == target_pos[1]) {
         loop= [
-                [target_pos[0], target_pos[1]], 
-                [target_pos[0],    cur_pos[1]], 
-                [   cur_pos[0],    cur_pos[1]], 
-                [   cur_pos[0], target_pos[1]], 
-              ];
-        n_loops = (cur_pos[1] - target_pos[1]) + (cur_pos[0] - target_pos[0]) - 1
-      } else { // cur_pos[0] == target_pos[0]
-        loop= [
-                [target_pos[0]    , target_pos[1]],
-                [target_pos[0]    ,    cur_pos[1]], 
-                [target_pos[0] + 1,    cur_pos[1]], 
-                [target_pos[0] + 1, target_pos[1]],
-              ];
-        n_loops = (cur_pos[1] - target_pos[1]) - 1
+                [target_pos[0], target_pos[1]    ], 
+                [   cur_pos[0], target_pos[1]    ],  
+                [   cur_pos[0], target_pos[1] + 1], 
+                [target_pos[0], target_pos[1] + 1],  
+              ]
+        n_loops = (cur_pos[0] - target_pos[0]) - 1
+      } else { // i.e. cur_pos[1] < target_pos[1]
+        if (cur_pos[0] == target_pos[0] + 1) {
+          loop= [
+                  [target_pos[0]    , target_pos[1]    ], 
+                  [   cur_pos[0]    , target_pos[1]    ],
+                  [   cur_pos[0]    ,    cur_pos[1]    ], 
+                  [target_pos[0] + 2,    cur_pos[1]    ], 
+                  [target_pos[0] + 2, target_pos[1] + 1], 
+                  [target_pos[0]    , target_pos[1] + 1], 
+                ];
+          n_loops = (target_pos[1] - cur_pos[1])
+        } else { // cur_pos[0] > target_pos[0] + 1
+          loop= [
+                  [target_pos[0]    , target_pos[1]    ], 
+                  [target_pos[0] + 1, target_pos[1]    ],
+                  [target_pos[0] + 1,    cur_pos[1]    ], 
+                  [   cur_pos[0]    ,    cur_pos[1]    ], 
+                  [   cur_pos[0]    , target_pos[1] + 1], 
+                  [target_pos[0]    , target_pos[1] + 1], 
+                ];
+          n_loops = (target_pos[1] - cur_pos[1]) + (cur_pos[0] - target_pos[0] - 1)
+        }
       }
-    } else if (cur_pos[1] == target_pos[1]) {
-      loop= [
-              [target_pos[0], target_pos[1]    ], 
-              [   cur_pos[0], target_pos[1]    ],  
-              [   cur_pos[0], target_pos[1] + 1], 
-              [target_pos[0], target_pos[1] + 1],  
-            ]
-      n_loops = (cur_pos[0] - target_pos[0]) - 1
-    } else { // i.e. cur_pos[1] < target_pos[1]
-      if (cur_pos[0] == target_pos[0] + 1) {
-        loop= [
-                [target_pos[0]    , target_pos[1]    ], 
-                [   cur_pos[0]    , target_pos[1]    ],
-                [   cur_pos[0]    ,    cur_pos[1]    ], 
-                [target_pos[0] + 2,    cur_pos[1]    ], 
-                [target_pos[0] + 2, target_pos[1] + 1], 
-                [target_pos[0]    , target_pos[1] + 1], 
-              ];
-        n_loops = (target_pos[1] - cur_pos[1])
-      } else { // cur_pos[0] > target_pos[0] + 1
-        loop= [
-                [target_pos[0]    , target_pos[1]    ], 
-                [target_pos[0] + 1, target_pos[1]    ],
-                [target_pos[0] + 1,    cur_pos[1]    ], 
-                [   cur_pos[0]    ,    cur_pos[1]    ], 
-                [   cur_pos[0]    , target_pos[1] + 1], 
-                [target_pos[0]    , target_pos[1] + 1], 
-              ];
-        n_loops = (target_pos[1] - cur_pos[1]) + (cur_pos[0] - target_pos[0] - 1)
+      await rotateLoop(loop, n_loops);
+      await processTileClick(target_tile);
+    }
+    // Extra steps if the next pos is along the wall 
+    // i.e. target_pos[1] == n_cols - 1
+    else {
+      console.log("edge case")
+      // First, go from prev at next to wall, to prev at the wall position
+      //   ###          ###
+      //   #P_    =>    #_P
+      //   000          000 
+      var prev_tile = solved_state_list[target_pos[0] * n_cols + target_pos[1] - 1];
+      await processTileClick(prev_tile);
+
+      // Move blank to the position below the prev tile
+      //   ###          ###
+      //   #_P    =>    #0P
+      //   000          00_ 
+      await moveBlankToPos(target_pos[0]+1, target_pos[1], true);
+      var cur_pos = target_tile.pos;
+
+      // Case 1 : It is just below, perfectly positioned
+      //          Just click it to solve
+      if (cur_pos[0] == target_pos[0] + 1 && cur_pos[1] == target_pos[1]) {
+        await processTileClick(target_tile);
+      }
+      // Case 2 : We just boxed it into the previous position
+      //          Needs some maneuvering
+      else if (cur_pos[0] == target_pos[0] && cur_pos[1] == target_pos[1] - 1) {
+        console.log("super special case");
+        // await delay(2000);
+        
+        // The current position evolves as
+        //   ###          ###          ###          ###          ###          ###
+        //   #CP    =>    #0C    =>    #0C    =>    #C0    =>    #C0    =>    #PC
+        //   00_          0P_          0_0          0_0          0P_          00_
+        //   000          000          0P0          0P0          000          000
+        // This would be unsolvable without extra tiles
+
+        await rotate_2x2_Square([target_pos[0]  , target_pos[1]-1], +4); // or -4
+        // await delay(2000);
+        await rotate_2x2_Square([target_pos[0]+1, target_pos[1]-1], -3);
+        // await delay(2000);
+        await rotate_2x2_Square([target_pos[0]  , target_pos[1]-1], -3); // or +4
+        // await delay(2000);
+        await rotate_2x2_Square([target_pos[0]+1, target_pos[1]-1], +4);
+        // await delay(2000);
+        await rotate_2x2_Square([target_pos[0]  , target_pos[1]-1], +3); // or -3
+        //                                                                      ^
+        // These alternatives are valid,                                         
+        // but give a solution that triggers the move undo penalty
+      } 
+      // Case 3 : It is somewhere else
+      // We can form a loop with the target and blank tile
+      else {
+        // On the same row
+        if (cur_pos[0] == target_pos[0]+1) { 
+          loop= [
+            [target_pos[0]+1, target_pos[1]],
+            [target_pos[0]+1,    cur_pos[1]],
+            [target_pos[0]+2,    cur_pos[1]],
+            [target_pos[0]+2, target_pos[1]],
+          ];
+          n_loops = (target_pos[1] - cur_pos[1]) - 1;
+        } 
+        // On the same column
+        else if (cur_pos[1] == target_pos[1]) { 
+          loop= [
+            [target_pos[0]+1, target_pos[1]  ],
+            [   cur_pos[0]  , target_pos[1]  ],
+            [   cur_pos[0]  , target_pos[1]-1],
+            [target_pos[0]+1, target_pos[1]-1],
+          ];
+          n_loops = (cur_pos[0] - target_pos[0]-1) - 1;
+        }
+        // In the general space, can form a big loop 
+        else  {
+          loop= [
+                  [target_pos[0]+1, target_pos[1]], 
+                  [   cur_pos[0]  , target_pos[1]], 
+                  [   cur_pos[0]  ,    cur_pos[1]], 
+                  [target_pos[0]+1,    cur_pos[1]], 
+                ];
+          n_loops = (target_pos[1] - cur_pos[1]) + (cur_pos[0] - target_pos[0]-1) - 1
+        }
+        await rotateLoop(loop, n_loops);
+        await processTileClick(target_tile);
+
+        await move_Blank_To_Pos_While_Avoiding_Solved(target_pos[0]+1, target_pos[1]-1)
+        await rotate_2x2_Square([target_pos[0], target_pos[1]-1], -3)
       }
     }
-    await rotateLoop(loop, n_loops);
-    await processTileClick(target_tile);
     console.log("did " + target_pos);
+    
+    target_pos[1] += 1
+    if (target_pos[1] >= n_cols) {
+      target_pos[0] += 1;
+      target_pos[1] = 0;
+    }
   }
-  // Last two rows
   console.log("done with steps")
 }
