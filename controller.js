@@ -8,6 +8,8 @@ var timer_started = false;
 var blank_pos = [];
 var solved_state_list = [];
 var tile_is_clicked = false;
+var last_move_pos = [];
+var last_move_time = null;
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
@@ -18,7 +20,7 @@ const delay = ms => new Promise(res => setTimeout(res, ms));
 window.addEventListener("DOMContentLoaded", (event) => {
   board_node = document.getElementById("board");
   timer_node = document.getElementById("timer");
-  MakeBoard(10,10);
+  MakeBoard(6,6);
 });
 
 function UpdateTimer() {
@@ -118,6 +120,8 @@ function MakeBoard(w,h) {
   blank_pos = [h-1,w-1];
   getTileAt(h-1,w-1).style.visibility = "hidden";
   tile_is_clicked = false;
+  last_move_pos = [];
+  last_move_time = null;
 }
 
 const processTileClick = async (cur_tile) => {
@@ -128,16 +132,27 @@ const processTileClick = async (cur_tile) => {
     tile_is_clicked = true;
   }
   try {
-    cur_tile_pos = cur_tile.pos;
+    var cur_tile_pos = cur_tile.pos;
+
+    // Check if we are undoing the last move.
+    // Penalize a bit, and make it wait
+    if (cur_tile_pos[0] == last_move_pos[0] && cur_tile_pos[1] == last_move_pos[1]) {
+      var cur_time = (new Date()).getTime();
+      if (cur_time < last_move_time + 300) {
+        await delay( Math.max(0, (last_move_time + 300) - cur_time) );
+        console.log("penalty triggered")
+      }
+    }
+
     if (Math.abs(cur_tile_pos[0] - blank_pos[0]) + Math.abs(cur_tile_pos[1] - blank_pos[1]) == 1) {
-      console.log("next to blank")
+      // console.log("next to blank")
       // blank_tile = tiles[blank_pos[0]][blank_pos[1]];
-      blank_tile = getTileAt(blank_pos[0], blank_pos[1]);
+      var blank_tile = getTileAt(blank_pos[0], blank_pos[1]);
       
       // Trigger the animation in the correspoding direction
       // Wait for it to finish, and then change the position
       var temp = document.createComment('')
-      original_class = cur_tile.className
+      var original_class = cur_tile.className
       if (cur_tile_pos[0] - blank_pos[0] == 1) {
         cur_tile.className += ' slide_up';
       } else if (cur_tile_pos[0] - blank_pos[0] == -1) {
@@ -169,13 +184,17 @@ const processTileClick = async (cur_tile) => {
       cur_tile.pos = blank_pos;
       blank_tile.pos = cur_tile_pos;
       blank_pos = cur_tile_pos;
+      
+      last_move_pos = cur_tile.pos.slice();
+      last_move_time = (new Date()).getTime();
+
       if (checkIfSolved()) {
         StopTimer();
       }
     } else {
-      console.log("not next to blank");
+      // console.log("not next to blank");
     }
-    console.log(cur_tile_pos);
+    // console.log(cur_tile_pos);
   } finally {
     tile_is_clicked = false;  
   }
@@ -309,10 +328,10 @@ async function straight_movement(i,j) {
   if (i == blank_pos[0]) {
     while(j != blank_pos[1]) {
       if (j > blank_pos[1]) {
-        console.log(getTileAt(blank_pos[0], blank_pos+1));
+        // console.log(getTileAt(blank_pos[0], blank_pos[1]+1));
         await processTileClick(getTileAt(blank_pos[0], blank_pos[1]+1));
       } else {
-        console.log(getTileAt(blank_pos[0], blank_pos-1));
+        // console.log(getTileAt(blank_pos[0], blank_pos[1]-1));
         await processTileClick(getTileAt(blank_pos[0], blank_pos[1]-1));
       }
     }
@@ -401,7 +420,9 @@ async function rotateLoop(arr, n=1) {
 
 // Rotates the square [lower_i, lower_i+1] x [lower_j, lower_j+1]
 // `n` times clockwise (blank tiles moves anti-clockwise)
-async function rotate_2x2_Square(lower_i, lower_j, n=1) {
+// Negative `n` means anti-clockwise
+async function rotate_2x2_Square(square_pos, n=1) {
+  var [lower_i, lower_j] = square_pos;
   if (lower_i == n_rows - 1 || lower_j == n_cols - 1) {
     return;
   }
@@ -413,35 +434,40 @@ async function rotate_2x2_Square(lower_i, lower_j, n=1) {
     return;
   }
 
+  var offset = blank_pos.map((e,i) => e - square_pos[i]);
   if (n > 0) {
     for (var i = 0; i < n; i++) {
-      if      (blank_pos[0] == lower_i   && blank_pos[1] == lower_j  ) {
-        await processTileClick(getTileAt(lower_i+1, lower_j  ));
+      if      (offset[0] == 0   && offset[1] == 0  ) {
+        offset = [1,0];
       } 
-      else if (blank_pos[0] == lower_i+1 && blank_pos[1] == lower_j  ) {
-        await processTileClick(getTileAt(lower_i+1, lower_j+1));
+      else if (offset[0] == 1 && offset[1] == 0  ) {
+        offset = [1,1];
       } 
-      else if (blank_pos[0] == lower_i+1 && blank_pos[1] == lower_j+1) {
-        await processTileClick(getTileAt(lower_i  , lower_j+1));
+      else if (offset[0] == 1 && offset[1] == 1) {
+        offset = [0,1];
       } 
-      else  /*(blank_pos[0] == lower_i   && blank_pos[1] == lower_j+1)*/ {
-        await processTileClick(getTileAt(lower_i  , lower_j)  );
+      else  /*(offset[0] == 0 && offset[1] == 1)*/ {
+        offset = [0,0];
       }
+      var click_pos = square_pos.map((e,i) => e + offset[i]);
+      await processTileClick(getTileAt(click_pos[0], click_pos[1]));
     }
   } else {
     for (var i = 0; i < -n; i++) {
-      if      (blank_pos[0] == lower_i+1 && blank_pos[1] == lower_j  ) {
-        await processTileClick(getTileAt(lower_i  , lower_j  ));
+      if      (offset[0] == 0   && offset[1] == 0  ) {
+        offset = [0,1];
       } 
-      else if (blank_pos[0] == lower_i+1 && blank_pos[1] == lower_j+1) {
-        await processTileClick(getTileAt(lower_i+1, lower_j  ));
+      else if (offset[0] == 0 && offset[1] == 1  ) {
+        offset = [1,1];
       } 
-      else if (blank_pos[0] == lower_i   && blank_pos[1] == lower_j+1) {
-        await processTileClick(getTileAt(lower_i+1, lower_j+1));
+      else if (offset[0] == 1 && offset[1] == 1) {
+        offset = [1,0];
       } 
-      else  /*(blank_pos[0] == lower_i   && blank_pos[1] == lower_j  )*/ {
-        await processTileClick(getTileAt(lower_i  , lower_j+1));
+      else  /*(offset[0] == 1 && offset[1] == 0)*/ {
+        offset = [0,0];
       }
+      var click_pos = square_pos.map((e,i) => e + offset[i]);
+      await processTileClick(getTileAt(click_pos[0], click_pos[1]));  
     }
   }
 }
