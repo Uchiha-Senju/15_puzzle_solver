@@ -375,9 +375,13 @@ async function rotateLoop(arr, n=1) {
       blank_segment = i;
     }
   }
+  if (blank_segment == null) {
+    return;
+  }
+
   var original_blank_pos = blank_pos.slice();
-  var original_segment = blank_segment
-  ;
+  var original_segment = blank_segment;
+
   var loops_completed = 0;
   while (loops_completed < n) {
     next_segment = (blank_segment + 1) % arr.length
@@ -392,5 +396,52 @@ async function rotateLoop(arr, n=1) {
   }
   if (blank_pos != original_blank_pos) {
     await straight_movement(original_blank_pos[0], original_blank_pos[1]);
+  }
+}
+
+// Rotates the square [lower_i, lower_i+1] x [lower_j, lower_j+1]
+// `n` times clockwise (blank tiles moves anti-clockwise)
+async function rotate_2x2_Square(lower_i, lower_j, n=1) {
+  if (lower_i == n_rows - 1 || lower_j == n_cols - 1) {
+    return;
+  }
+  if ( !(lower_i <= blank_pos[0] && blank_pos[0] <= lower_i + 1
+      && lower_j <= blank_pos[1] && blank_pos[1] <= lower_j + 1 ) ) {
+    return;
+  }
+  if (n == 0) {
+    return;
+  }
+
+  if (n > 0) {
+    for (var i = 0; i < n; i++) {
+      if      (blank_pos[0] == lower_i   && blank_pos[1] == lower_j  ) {
+        await processTileClick(getTileAt(lower_i+1, lower_j  ));
+      } 
+      else if (blank_pos[0] == lower_i+1 && blank_pos[1] == lower_j  ) {
+        await processTileClick(getTileAt(lower_i+1, lower_j+1));
+      } 
+      else if (blank_pos[0] == lower_i+1 && blank_pos[1] == lower_j+1) {
+        await processTileClick(getTileAt(lower_i  , lower_j+1));
+      } 
+      else  /*(blank_pos[0] == lower_i   && blank_pos[1] == lower_j+1)*/ {
+        await processTileClick(getTileAt(lower_i  , lower_j)  );
+      }
+    }
+  } else {
+    for (var i = 0; i < -n; i++) {
+      if      (blank_pos[0] == lower_i+1 && blank_pos[1] == lower_j  ) {
+        await processTileClick(getTileAt(lower_i  , lower_j  ));
+      } 
+      else if (blank_pos[0] == lower_i+1 && blank_pos[1] == lower_j+1) {
+        await processTileClick(getTileAt(lower_i+1, lower_j  ));
+      } 
+      else if (blank_pos[0] == lower_i   && blank_pos[1] == lower_j+1) {
+        await processTileClick(getTileAt(lower_i+1, lower_j+1));
+      } 
+      else  /*(blank_pos[0] == lower_i   && blank_pos[1] == lower_j  )*/ {
+        await processTileClick(getTileAt(lower_i  , lower_j+1));
+      }
+    }
   }
 }
