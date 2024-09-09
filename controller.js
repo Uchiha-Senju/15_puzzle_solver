@@ -18,7 +18,7 @@ const delay = ms => new Promise(res => setTimeout(res, ms));
 window.addEventListener("DOMContentLoaded", (event) => {
   board_node = document.getElementById("board");
   timer_node = document.getElementById("timer");
-  MakeBoard(4,4);
+  MakeBoard(10,10);
 });
 
 function UpdateTimer() {
@@ -64,7 +64,6 @@ function StopTimer() {
     timer_started = false;
   }
 }
-
 
 function getTileAt(i,j) {
   return board_node.children[n_cols * i + j];
@@ -123,60 +122,63 @@ function MakeBoard(w,h) {
 
 const processTileClick = async (cur_tile) => {
   if (tile_is_clicked == true) {
-    console.log("another tile is being processed, must disallow race conditions");
+    console.log("another tile is being processed, must disallow race conditions; tile coords are " + cur_tile.pos);
     return;
   } else {
     tile_is_clicked = true;
   }
-  cur_tile_pos = cur_tile.pos;
-  if (Math.abs(cur_tile_pos[0] - blank_pos[0]) + Math.abs(cur_tile_pos[1] - blank_pos[1]) == 1) {
-    console.log("next to blank")
-    // blank_tile = tiles[blank_pos[0]][blank_pos[1]];
-    blank_tile = getTileAt(blank_pos[0], blank_pos[1]);
-    
-    // Trigger the animation in the correspoding direction
-    // Wait for it to finish, and then change the position
-    var temp = document.createComment('')
-    original_class = cur_tile.className
-    if (cur_tile_pos[0] - blank_pos[0] == 1) {
-      cur_tile.className += ' slide_up';
-    } else if (cur_tile_pos[0] - blank_pos[0] == -1) {
-      cur_tile.className += ' slide_down';
-    } else if (cur_tile_pos[1] - blank_pos[1] == 1) {
-      cur_tile.className += ' slide_left';
+  try {
+    cur_tile_pos = cur_tile.pos;
+    if (Math.abs(cur_tile_pos[0] - blank_pos[0]) + Math.abs(cur_tile_pos[1] - blank_pos[1]) == 1) {
+      console.log("next to blank")
+      // blank_tile = tiles[blank_pos[0]][blank_pos[1]];
+      blank_tile = getTileAt(blank_pos[0], blank_pos[1]);
+      
+      // Trigger the animation in the correspoding direction
+      // Wait for it to finish, and then change the position
+      var temp = document.createComment('')
+      original_class = cur_tile.className
+      if (cur_tile_pos[0] - blank_pos[0] == 1) {
+        cur_tile.className += ' slide_up';
+      } else if (cur_tile_pos[0] - blank_pos[0] == -1) {
+        cur_tile.className += ' slide_down';
+      } else if (cur_tile_pos[1] - blank_pos[1] == 1) {
+        cur_tile.className += ' slide_left';
+      } else {
+        cur_tile.className += ' slide_right';
+      } 
+      await delay(100);
+      cur_tile.className = original_class;
+
+      // temp = document.createElement("div");
+      // temp.replaceChildren(cur_tile.children);
+      // cur_tile.replaceChildren(blank_tile.children);
+      // blank_tile.replaceChildren(temp.children);
+      // Don't swap children, swap the nodes in DOM
+      cur_tile.replaceWith(temp)
+      blank_tile.replaceWith(cur_tile)
+      temp.replaceWith(blank_tile)
+
+
+      // Swap in array. Defunct after replacing array with a yfunction
+      // temp = tiles[blank_pos[0]][blank_pos[1]];
+      // tiles[blank_pos[0]][blank_pos[1]] = tiles[cur_tile_pos[0]][cur_tile_pos[1]];
+      // tiles[cur_tile_pos[0]][cur_tile_pos[1]] = temp;
+
+      // Swap internally stored positions
+      cur_tile.pos = blank_pos;
+      blank_tile.pos = cur_tile_pos;
+      blank_pos = cur_tile_pos;
+      if (checkIfSolved()) {
+        StopTimer();
+      }
     } else {
-      cur_tile.className += ' slide_right';
-    } 
-    await delay(100);
-    cur_tile.className = original_class;
-
-    // temp = document.createElement("div");
-    // temp.replaceChildren(cur_tile.children);
-    // cur_tile.replaceChildren(blank_tile.children);
-    // blank_tile.replaceChildren(temp.children);
-    // Don't swap children, swap the nodes in DOM
-    cur_tile.replaceWith(temp)
-    blank_tile.replaceWith(cur_tile)
-    temp.replaceWith(blank_tile)
-
-
-    // Swap in array. Defunct after replacing array with a yfunction
-    // temp = tiles[blank_pos[0]][blank_pos[1]];
-    // tiles[blank_pos[0]][blank_pos[1]] = tiles[cur_tile_pos[0]][cur_tile_pos[1]];
-    // tiles[cur_tile_pos[0]][cur_tile_pos[1]] = temp;
-
-    // Swap internally stored positions
-    cur_tile.pos = blank_pos;
-    blank_tile.pos = cur_tile_pos;
-    blank_pos = cur_tile_pos;
-    if (checkIfSolved()) {
-      StopTimer();
+      console.log("not next to blank");
     }
-  } else {
-    console.log("not next to blank");
+    console.log(cur_tile_pos);
+  } finally {
+    tile_is_clicked = false;  
   }
-  console.log(cur_tile_pos);
-  tile_is_clicked = false;
 }
 
 function generatePermutation(n) {
@@ -279,24 +281,60 @@ function permuteBoard() {
   }
 }
 
-function solveBoard() {
+function put_Board_In_Solved_Order_Instantly() {
   n_tiles = solved_state_list.length;
   board_node.replaceChildren();
   for (var i = 0; i < n_tiles; i++) {
     board_node.appendChild(solved_state_list[i]);
+    solved_state_list[i].pos = [Math.floor(i / n_cols), i % n_cols]
   }
   StopTimer();
   timer_node.textContent = '';
+  blank_pos=[n_rows-1,n_cols-1];
   tile_is_clicked = false;
 }
 
 function checkIfSolved() {
-  n_tiles = solved_state_list.length
+  var n_tiles = solved_state_list.length
   for (var i = 0; i < n_tiles; i++) {
-    x = Math.floor(i / n_cols);
-    y = i % n_cols;
+    var x = Math.floor(i / n_cols);
+    var y = i % n_cols;
     if (solved_state_list[i] != getTileAt(x,y))
       return false;
   }
   return true;
 }
+
+async function straight_movement(i,j) {
+  if (i == blank_pos[0]) {
+    while(j != blank_pos[1]) {
+      if (j > blank_pos[1]) {
+        console.log(getTileAt(blank_pos[0], blank_pos+1));
+        await processTileClick(getTileAt(blank_pos[0], blank_pos[1]+1));
+      } else {
+        console.log(getTileAt(blank_pos[0], blank_pos-1));
+        await processTileClick(getTileAt(blank_pos[0], blank_pos[1]-1));
+      }
+    }
+  } else if (j == blank_pos[1]) {
+    while(i != blank_pos[0]) {
+      if (i > blank_pos[0]) {
+        await processTileClick(getTileAt(blank_pos[0]+1, blank_pos[1]));
+      } else {
+        await processTileClick(getTileAt(blank_pos[0]-1, blank_pos[1]));
+      }
+    }
+  }
+}
+
+// Moves the blank tile to the given position
+async function moveBlankToPos(i,j, vertical_first = false) {
+  if (vertical_first) {
+    await straight_movement(i,blank_pos[1]);
+    await straight_movement(blank_pos[0],j);
+  } else {
+    await straight_movement(blank_pos[0],j);
+    await straight_movement(i,blank_pos[1]);
+  }
+}
+
