@@ -471,3 +471,90 @@ async function rotate_2x2_Square(square_pos, n=1) {
     }
   }
 }
+
+async function solve_Board_step_by_step() {
+  var target_pos = [0,0];
+
+  // Last two rows need to be solved with different techniques
+  while (target_pos[0] < n_cols-2) {
+    var target_tile = solved_state_list[target_pos[0] * n_cols + target_pos[1]];
+    var cur_pos = target_tile.pos;
+    if (cur_pos[0] == target_pos[0] && cur_pos[1] == target_pos[1]) {
+      target_pos[1] += 1
+      if (target_pos[1] >= n_cols) {
+        target_pos[0] += 1
+        target_pos[1] = 0
+      }
+      continue;
+    }
+
+    // Move blank tile to target position, simplifies code
+    // Also update tile position
+    await move_Blank_To_Pos_While_Avoiding_Solved(target_pos[0], target_pos[1]);
+    var cur_pos = target_tile.pos;
+
+    // Assumption, everything before the current pos is solved, i.e
+    //  ###
+    //  #T0    <==     # is before T, and 0 is after T i.e. # < T < 0
+    //  000 
+    // and all # are solved. So cur_pos >= target_pos necessarily.
+    // 
+    // Only valid if the current_pos is not along the wall.
+    var loop = [];
+    var n_loops = 0;
+    if (cur_pos[1] > target_pos[1]) {
+      if (cur_pos[0] > target_pos[0]) {
+        loop= [
+                [target_pos[0], target_pos[1]], 
+                [target_pos[0],    cur_pos[1]], 
+                [   cur_pos[0],    cur_pos[1]], 
+                [   cur_pos[0], target_pos[1]], 
+              ];
+        n_loops = (cur_pos[1] - target_pos[1]) + (cur_pos[0] - target_pos[0]) - 1
+      } else { // cur_pos[0] == target_pos[0]
+        loop= [
+                [target_pos[0]    , target_pos[1]],
+                [target_pos[0]    ,    cur_pos[1]], 
+                [target_pos[0] + 1,    cur_pos[1]], 
+                [target_pos[0] + 1, target_pos[1]],
+              ];
+        n_loops = (cur_pos[1] - target_pos[1]) - 1
+      }
+    } else if (cur_pos[1] == target_pos[1]) {
+      loop= [
+              [target_pos[0], target_pos[1]    ], 
+              [   cur_pos[0], target_pos[1]    ],  
+              [   cur_pos[0], target_pos[1] + 1], 
+              [target_pos[0], target_pos[1] + 1],  
+            ]
+      n_loops = (cur_pos[0] - target_pos[0]) - 1
+    } else { // i.e. cur_pos[1] < target_pos[1]
+      if (cur_pos[0] == target_pos[0] + 1) {
+        loop= [
+                [target_pos[0]    , target_pos[1]    ], 
+                [   cur_pos[0]    , target_pos[1]    ],
+                [   cur_pos[0]    ,    cur_pos[1]    ], 
+                [target_pos[0] + 2,    cur_pos[1]    ], 
+                [target_pos[0] + 2, target_pos[1] + 1], 
+                [target_pos[0]    , target_pos[1] + 1], 
+              ];
+        n_loops = (target_pos[1] - cur_pos[1])
+      } else { // cur_pos[0] > target_pos[0] + 1
+        loop= [
+                [target_pos[0]    , target_pos[1]    ], 
+                [target_pos[0] + 1, target_pos[1]    ],
+                [target_pos[0] + 1,    cur_pos[1]    ], 
+                [   cur_pos[0]    ,    cur_pos[1]    ], 
+                [   cur_pos[0]    , target_pos[1] + 1], 
+                [target_pos[0]    , target_pos[1] + 1], 
+              ];
+        n_loops = (target_pos[1] - cur_pos[1]) + (cur_pos[0] - target_pos[0] - 1)
+      }
+    }
+    await rotateLoop(loop, n_loops);
+    await processTileClick(target_tile);
+    console.log("did " + target_pos);
+  }
+  // Last two rows
+  console.log("done with steps")
+}
