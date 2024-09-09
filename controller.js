@@ -338,3 +338,59 @@ async function moveBlankToPos(i,j, vertical_first = false) {
   }
 }
 
+// Moves the blank tile to while avoiding all tiles 
+// numerically smaller than the target position
+// i.e. x < b.x or (y < b.y if x == b.x)
+async function move_Blank_To_Pos_While_Avoiding_Solved(i,j) {
+  // Orignal plan : take blank to target, b -> t
+  // Different movement for 
+  // - when (b.y < t.y and b.x > t.x) 
+  //     (can be any order of movement)
+  // - when (b.y > t.y and b.x > t.x)
+  //     (must be horizontal -> vertical)
+  // - when b.x < t.x or (b.y < t.y if b.x == t.x)
+  //     since the blank tile is in the solve area, 
+  // 
+  // But all can be resolved by adopting (horizontal, then vertical) movement as standard.
+  await moveBlankToPos(i,j, false);
+}
+
+// Assumes blank is on the loop
+async function rotateLoop(arr, n=1) {
+  if (n == 0) {
+    return;
+  } else if (n < 0) {
+    n = -n;
+    arr.reverse();
+  }
+
+  blank_segment = null;
+  for (var i = 0; i < arr.length; i++) {
+    next_i = (i+1) % arr.length
+    if (! (arr[i][0] == arr[next_i][0] || arr[i][1] == arr[next_i][1])) {
+      return;
+    }
+    if ( (arr[i][0] == arr[next_i][0] && arr[i][0] == blank_pos[0])
+      || (arr[i][1] == arr[next_i][1] && arr[i][1] == blank_pos[1]) ){
+      blank_segment = i;
+    }
+  }
+  var original_blank_pos = blank_pos.slice();
+  var original_segment = blank_segment
+  ;
+  var loops_completed = 0;
+  while (loops_completed < n) {
+    next_segment = (blank_segment + 1) % arr.length
+    await straight_movement(arr[next_segment][0], arr[next_segment][1]);
+    if (next_segment == original_segment) {
+      loops_completed += 1
+    }
+    // console.log("did segment " + blank_segment + 
+    //   ", now on " + blank_pos +
+    //   ", " + loops_completed + " loops completed" )
+    blank_segment = next_segment;
+  }
+  if (blank_pos != original_blank_pos) {
+    await straight_movement(original_blank_pos[0], original_blank_pos[1]);
+  }
+}
