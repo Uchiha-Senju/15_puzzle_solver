@@ -43,7 +43,23 @@
       </div>
       <!-- Change board state -->
       <button onclick="permuteBoard(); StartTimer();">Shuffle the Board</button>
-      <button onclick="put_Board_In_Solved_Order_Instantly()">Solve the Board</button>
+      <button id="solver_button" onclick="(() => {
+        if (! solver_started) {
+          solve_Board_step_by_step();
+          if (this.textContent == 'Solve the Board step-by-step') {
+            this.textContent = 'Solve the Board faster';
+          } else {
+            this.textContent = 'Solve the Board step-by-step';
+          };
+        } else if (solver_started && move_time == 100) {
+          move_time = 20;
+          this.textContent = 'Solve the Board fastest';
+        } else if (solver_started && move_time == 20) {
+          move_time = 0;
+          this.textContent = 'Wait for it to finish';
+        }
+      })();">Solve the Board step-by-step</button>
+      <button onclick="put_Board_In_Solved_Order_Instantly()">Solve the Board instantly</button>
     </div>
     
     <div id="board">
