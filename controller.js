@@ -296,9 +296,16 @@ function permuteBoard() {
 
   console.log(board_pos_of_blank_tiles, parity_of_permutation)
   if ( parity_of_blank_tile != parity_of_permutation ) {
-    temp = permutation[0];
-    permutation[0] = permutation[1];
-    permutation[1] = temp;
+    var [i,j] = [0,1];
+    if (permutation[i] == n_tiles - 1) {
+      i = 2;
+    }
+    if (permutation[j] == n_tiles - 1) {
+      j = 2;
+    }
+    var temp = permutation[i];
+    permutation[i] = permutation[j];
+    permutation[j] = temp;
   }
   console.log(permutation, getCyclesInPermutation(permutation, true), getParityOfPermutation(permutation));
 
