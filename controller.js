@@ -513,7 +513,7 @@ async function solve_Board_step_by_step() {
   timer_node.style.color = 'blue';
 
   // Last two rows need to be solved with different techniques
-  while (target_pos[0] < n_cols-2) {
+  while (target_pos[0] < n_rows-2) {
     // if (abort_solver){
     //   abort_solver = false;
     //   return;
