@@ -6,8 +6,9 @@ body {
   display : grid;
   grid-template-columns : repeat(4, 1fr);
   grid-gap : 5px;
-  width: 75vmin;
+  /* width: 75vmin; */
   height: 75vmin;
+  aspect-ratio: 1;
   margin : 2vmin auto;
   padding: 2vmin 2vmin;
   container-type : size;
@@ -70,7 +71,7 @@ body {
 }
 
 .tile {
-  aspect-ratio: 1;
+  /* aspect-ratio: 1; */
   background-color: cadetblue;
   border : 1cqw solid black;
   border-radius : 2cqw;
@@ -98,7 +99,7 @@ body {
 
 .tile-text {
   /* To size text accroding to the tile */
-  font-size : 70cqw;
+  font-size : min(70cqw, 70cqh);
 
   /* To shift text ot the center */
   position: absolute;

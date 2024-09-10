@@ -52,9 +52,9 @@
             this.textContent = 'Solve the Board step-by-step';
           };
         } else if (solver_started && move_time == 100) {
-          move_time = 20;
+          move_time = 50;
           this.textContent = 'Solve the Board fastest';
-        } else if (solver_started && move_time == 20) {
+        } else if (solver_started && move_time == 50) {
           move_time = 0;
           this.textContent = 'Wait for it to finish';
         }
