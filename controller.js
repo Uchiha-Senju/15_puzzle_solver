@@ -11,6 +11,8 @@ var tile_is_clicked = false;
 var last_move_pos = [];
 var last_move_time = null;
 
+var solver_started = false;
+
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
 // document.window.onload = function(){console.log("doc window loaded")};
@@ -61,17 +63,27 @@ function StartTimer() {
 
 function StopTimer() {
   if (timer_started) {
-    timer_node.style.color = 'green';
+    if (!solver_started) {
+      timer_node.style.color = 'green';
+    }
     clearInterval(interval_id);
     timer_started = false;
   }
+}
+
+function clearTimer() {
+  StopTimer();
+  timer_node.textContent = '';
+  timer_node.style.color = '';
 }
 
 function getTileAt(i,j) {
   return board_node.children[n_cols * i + j];
 }
 
-function MakeBoard(w,h) { 
+function MakeBoard(w,h) {
+  clearTimer();
+
   w = parseInt(w)
   h = parseInt(h)
   if (! (Number.isInteger(w) && Number.isInteger(h)) ){
@@ -307,8 +319,7 @@ function put_Board_In_Solved_Order_Instantly() {
     board_node.appendChild(solved_state_list[i]);
     solved_state_list[i].pos = [Math.floor(i / n_cols), i % n_cols]
   }
-  StopTimer();
-  timer_node.textContent = '';
+  clearTimer();
   blank_pos=[n_rows-1,n_cols-1];
   tile_is_clicked = false;
 }
@@ -374,7 +385,6 @@ async function move_Blank_To_Pos_While_Avoiding_Solved(i,j) {
   await moveBlankToPos(i,j, false);
 }
 
-// Assumes blank is on the loop
 async function rotateLoop(arr, n=1) {
   if (n == 0 || arr.length < 4 ) {
     return;
@@ -474,6 +484,8 @@ async function rotate_2x2_Square(square_pos, n=1) {
 
 async function solve_Board_step_by_step() {
   var target_pos = [0,0];
+  solver_started = true;
+  timer_node.style.color = 'blue';
 
   // Last two rows need to be solved with different techniques
   while (target_pos[0] < n_cols-2) {
@@ -657,11 +669,21 @@ async function solve_Board_step_by_step() {
   while (target_pos[1] < n_cols - 2) {
     var target_1 = solved_state_list[ target_pos[0]    * n_cols + target_pos[1]];
     var target_2 = solved_state_list[(target_pos[0] +1)* n_cols + target_pos[1]];
+
+    var cur_pos_1 = target_1.pos;
+    var cur_pos_2 = target_2.pos;
+    if (cur_pos_1[0] == target_pos[0]     && cur_pos_1[1] == target_pos[1]
+     && cur_pos_2[0] == target_pos[0] + 1 && cur_pos_2[1] == target_pos[1]) {
+      // The tiles are aligned already
+      target_pos[1] += 1;
+      continue;
+    }
+
     
     // Take the horizontal route to avoid the undo penalty
     await moveBlankToPos(target_pos[0], target_pos[1], false); 
-    var cur_pos_1 = target_1.pos;
-    var cur_pos_2 = target_2.pos;
+    cur_pos_1 = target_1.pos;
+    cur_pos_2 = target_2.pos;
 
     // Assume that all positions with both coords smaller are solved i.e.
     // ###
@@ -781,5 +803,6 @@ async function solve_Board_step_by_step() {
   }
   
 
-  console.log("done with steps")
+  console.log("done with steps");
+  solver_started = false;
 }
