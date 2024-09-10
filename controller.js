@@ -103,6 +103,17 @@ function MakeBoard(w,h) {
 
   board_node.style.gridTemplateColumns = `repeat(${w}, 1fr)`;
   board_node.style.gridTemplateRows    = `repeat(${h}, 1fr)`;
+  board_node.style.width               = `min(75vmin, calc(75vmin * ${w}/${h}))`;
+  board_node.style.height              = `min(75vmin, calc(75vmin * ${h}/${w}))`;
+  // Slight penalty to the smaller dimension because 
+  // it seems that the tiles start overflowing 
+  // in the longer dimension because of rounding errors
+  if (w / h > 2) {
+    board_node.style.height              = `min(75vmin, calc(75vmin * ${h}/${w} * 0.98))`;
+  }
+  else if (h / w > 2) {
+    board_node.style.width               = `min(75vmin, calc(75vmin * ${w}/${h}) * 0.98)`;
+  }
   n_rows = h;
   n_cols = w;
   solved_state_list = [];

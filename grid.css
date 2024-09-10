@@ -6,9 +6,10 @@ body {
   display : grid;
   grid-template-columns : repeat(4, 1fr);
   grid-gap : 5px;
+  /* superseded by javascript */
   /* width: 75vmin; */
-  height: 75vmin;
-  aspect-ratio: 1;
+  /* height: 75vmin; */
+  /* aspect-ratio: 1; */
   margin : 2vmin auto;
   padding: 2vmin 2vmin;
   container-type : size;
@@ -71,10 +72,10 @@ body {
 }
 
 .tile {
-  /* aspect-ratio: 1; */
+  aspect-ratio: 1;
   background-color: cadetblue;
-  border : 1cqw solid black;
-  border-radius : 2cqw;
+  border : max(1cqw, 1cqh) solid black;
+  border-radius : max(2cqw, 2cqh);
   container-type : size;
   transform: translate(0%,0%);
   transition: all 0.10s cubic-bezier(0.4, 0, 1, 1);;
