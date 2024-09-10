@@ -20,7 +20,7 @@ const delay = ms => new Promise(res => setTimeout(res, ms));
 window.addEventListener("DOMContentLoaded", (event) => {
   board_node = document.getElementById("board");
   timer_node = document.getElementById("timer");
-  MakeBoard(6,6);
+  MakeBoard(4,4);
 });
 
 function UpdateTimer() {
@@ -376,7 +376,7 @@ async function move_Blank_To_Pos_While_Avoiding_Solved(i,j) {
 
 // Assumes blank is on the loop
 async function rotateLoop(arr, n=1) {
-  if (n == 0) {
+  if (n == 0 || arr.length < 4 ) {
     return;
   } else if (n < 0) {
     n = -n;
@@ -652,5 +652,134 @@ async function solve_Board_step_by_step() {
       target_pos[1] = 0;
     }
   }
+
+  // Last 2 rows except last 2x2
+  while (target_pos[1] < n_cols - 2) {
+    var target_1 = solved_state_list[ target_pos[0]    * n_cols + target_pos[1]];
+    var target_2 = solved_state_list[(target_pos[0] +1)* n_cols + target_pos[1]];
+    
+    // Take the horizontal route to avoid the undo penalty
+    await moveBlankToPos(target_pos[0], target_pos[1], false); 
+    var cur_pos_1 = target_1.pos;
+    var cur_pos_2 = target_2.pos;
+
+    // Assume that all positions with both coords smaller are solved i.e.
+    // ###
+    // #_0
+    // #00
+    // Now we position the second target i.e. lower tile in that place
+    var loop = []
+    var n_loops = 0;
+    // target is under the blank tile
+    if (cur_pos_2[1] == target_pos[1]) {
+      // pass;
+    }
+    // target is in the same row
+    else if (cur_pos_2[0] == target_pos[0]) {
+      loop = [
+        [target_pos[0]  , target_pos[1]],
+        [target_pos[0]  ,  cur_pos_2[1]],
+        [target_pos[0]+1,  cur_pos_2[1]],
+        [target_pos[0]+1, target_pos[1]],
+      ];
+      n_loops = (cur_pos_2[1] - target_pos[1]) - 1;
+    }
+    // general loop is formed with the blank and the target
+    else {
+      loop = [
+        [target_pos[0], target_pos[1]],
+        [target_pos[0],  cur_pos_2[1]],
+        [ cur_pos_2[0],  cur_pos_2[1]],
+        [ cur_pos_2[0], target_pos[1]],
+      ];
+      n_loops = (cur_pos_2[1] - target_pos[1]) + 1/*==(cur_pos_2[0] - target_pos[0])*/ - 1;
+    }
+    await rotateLoop(loop, n_loops);
+    await processTileClick(target_2);
+
+    // Now we position target_1 i.e. the upper tile next to it 
+    await move_Blank_To_Pos_While_Avoiding_Solved(target_pos[0], target_pos[1] + 1); 
+    var cur_pos_1 = target_1.pos;
+
+    // Upper tile is right under, maneuvering is needed
+    if (cur_pos_1[1] == target_pos[1]) {
+      // We need to execute the following
+      //   ####          ####          ####          ####          ####          ####
+      //   #L_0    =>    #0_0    =>    #0_U    =>    #L_U    =>    #LU0    =>    #U_0
+      //   #U00          #LU0          #L00          #000          #0_0          #L00
+      var square_1 = target_pos;
+      var square_2 = [target_pos[0], target_pos[1] + 1]
+      await rotate_2x2_Square(square_1, -4);
+      await rotate_2x2_Square(square_2, +4);
+      await rotate_2x2_Square(square_1, +4);
+      await rotate_2x2_Square(square_2, -3);
+      await rotate_2x2_Square(square_1, -3);
+    }
+    // Upper tile can loop to location
+    else {
+      // Under blank tile
+      if (cur_pos_1[1] == target_pos[1]+1) {
+        // pass;
+      }
+      // target is in the same row
+      else if (cur_pos_1[0] == target_pos[0]) {
+        loop = [
+          [target_pos[0]  , target_pos[1]+1],
+          [target_pos[0]  ,  cur_pos_1[1]  ],
+          [target_pos[0]+1,  cur_pos_1[1]  ],
+          [target_pos[0]+1, target_pos[1]+1],
+        ];
+        n_loops = (cur_pos_1[1] - target_pos[1]-1) - 1;
+      }
+      // general loop is formed
+      else {
+        loop = [
+          [target_pos[0], target_pos[1]+1],
+          [target_pos[0],  cur_pos_1[1]  ],
+          [ cur_pos_1[0],  cur_pos_1[1]  ],
+          [ cur_pos_1[0], target_pos[1]+1],
+        ];
+        n_loops = (cur_pos_1[1] - target_pos[1]-1) + 1/*==(cur_pos_1[0] - target_pos[0])*/ - 1;
+      }
+      await rotateLoop(loop, n_loops);
+      await processTileClick(target_1);
+      // Now we have
+      //   ####
+      //   #LU0
+      //   #000
+
+      await moveBlankToPos(target_pos[0]+1, target_pos[1]+1, true);
+      await rotate_2x2_Square(target_pos, -3);
+    }
+    console.log("did " + target_pos);
+    target_pos[1] += 1;
+  }
+
+  // Last 2x2
+  // Symbols are 11 = E, 12 = T, 15 = F, blank = _ for the 4,4 board
+  var last_tile = solved_state_list[n_cols * n_rows - 2];
+  await moveBlankToPos(n_rows-1, n_cols-1,true);
+  if (last_tile.pos[0] == n_rows-1) {
+    // This is solved
+    // ###
+    // #ET
+    // #F_
+  } 
+  // One clock-wise rotation is needed
+  // ###
+  // #TF
+  // #E_
+  else if (last_tile.pos[1] == n_rows-1) {
+    await rotate_2x2_Square([n_rows-2, n_cols-2], +4);
+  } 
+  else /* if (last_tile.pos[1] == n_rows-2) */ {
+    // One counter-clockwise rotation is needed
+    // ###
+    // #FE
+    // #T_
+    await rotate_2x2_Square([n_rows-2, n_cols-2], -4);
+  }
+  
+
   console.log("done with steps")
 }
