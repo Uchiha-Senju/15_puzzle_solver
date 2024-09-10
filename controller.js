@@ -746,6 +746,8 @@ async function solve_Board_step_by_step() {
     }
     // Upper tile can loop to location
     else {
+      var loop = [];
+      var n_loops = [];
       // Under blank tile
       if (cur_pos_1[1] == target_pos[1]+1) {
         // pass;
