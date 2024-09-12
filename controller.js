@@ -103,16 +103,16 @@ function MakeBoard(w,h) {
 
   board_node.style.gridTemplateColumns = `repeat(${w}, 1fr)`;
   board_node.style.gridTemplateRows    = `repeat(${h}, 1fr)`;
-  board_node.style.width               = `min(75vmin, calc(75vmin * ${w}/${h}))`;
-  board_node.style.height              = `min(75vmin, calc(75vmin * ${h}/${w}))`;
+  board_node.style.width               = `min(80vw, calc(80vh * ${w}/${h}))`;
+  board_node.style.height              = `min(80vh, calc(80vw * ${h}/${w}))`;
   // Slight penalty to the smaller dimension because 
   // it seems that the tiles start overflowing 
   // in the longer dimension because of rounding errors
   if (w / h > 2) {
-    board_node.style.height              = `min(75vmin, calc(75vmin * ${h}/${w} * 0.98))`;
+    board_node.style.height            = `min(80vh, calc(80vw * ${h}/${w} * 0.98))`;
   }
   else if (h / w > 2) {
-    board_node.style.width               = `min(75vmin, calc(75vmin * ${w}/${h}) * 0.98)`;
+    board_node.style.width             = `min(80vw, calc(80vh * ${w}/${h}) * 0.98)`;
   }
   n_rows = h;
   n_cols = w;
@@ -812,7 +812,7 @@ async function solve_Board_step_by_step() {
   // Symbols are 11 = E, 12 = T, 15 = F, blank = _ for the 4,4 board
   var last_tile = solved_state_list[n_cols * n_rows - 2];
   await moveBlankToPos(n_rows-1, n_cols-1,true, move_time);
-  if (last_tile.pos[0] == n_rows-1) {
+  if (last_tile.pos[0] == n_rows-1 && last_tile.pos[1] == n_cols - 2) {
     // This is solved
     // ###
     // #ET
@@ -822,10 +822,10 @@ async function solve_Board_step_by_step() {
   // ###
   // #TF
   // #E_
-  else if (last_tile.pos[1] == n_rows-1) {
+  else if (last_tile.pos[0] == n_rows - 2 && last_tile.pos[1] == n_cols - 1) {
     await rotate_2x2_Square([n_rows-2, n_cols-2], +4, move_time);
   } 
-  else /* if (last_tile.pos[1] == n_rows-2) */ {
+  else /* if (last_tile.pos[0] == n_rows - 2 && last_tile.pos[1] == n_cols - 2) */ {
     // One counter-clockwise rotation is needed
     // ###
     // #FE

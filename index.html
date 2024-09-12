@@ -20,6 +20,10 @@
     <![endif]-->
 
     <div id="controls">
+      <!-- Timer -->
+      <div id="timer_box">
+        <div id="timer"></div>
+      </div>
       <!-- Change board size -->
       <div id="board_size_controls">
         <button id="board_size_button"
@@ -36,10 +40,6 @@
           placeholder="Height" title="No. of cells in the board in Vertical direction"
           value="4">
         </div>
-      </div>
-      <!-- Timer -->
-      <div id="timer_box">
-        <div id="timer"></div>
       </div>
       <!-- Change board state -->
       <button onclick="permuteBoard(); StartTimer();">Shuffle the Board</button>
