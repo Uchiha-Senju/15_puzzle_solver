@@ -201,6 +201,7 @@ const processTileClick = async (cur_tile, wait_time = null) => {
       // Trigger the animation in the correspoding direction
       // Wait for it to finish, and then change the position
       var temp = document.createComment('')
+      cur_tile.style.transitionDuration = wait_time + 'ms';
       var original_class = cur_tile.className
       if (cur_tile_pos[0] - blank_pos[0] == 1) {
         cur_tile.className += ' slide_up';
@@ -212,6 +213,7 @@ const processTileClick = async (cur_tile, wait_time = null) => {
         cur_tile.className += ' slide_right';
       } 
       await delay(wait_time);
+      cur_tile.style.transitionDuration = '';
       cur_tile.className = original_class;
 
       // temp = document.createElement("div");
@@ -261,7 +263,7 @@ function processTileTouchStart(cur_tile, touch_event) {
   cur_tile.touches = cur_tile.touches.concat(Array.from(touch_event.changedTouches));
 }
 
-function processTileTouchEnd(cur_tile, touch_event, wait_time = null) {
+function processTileTouchEnd(cur_tile, touch_event, wait_time = 70) {
   // console.log("inner end triggered");
   var cur_tile_pos = cur_tile.pos;
   if ( Math.abs(cur_tile_pos[0] - blank_pos[0]) + Math.abs(cur_tile_pos[1] - blank_pos[1]) == 1 ) {

@@ -43,7 +43,7 @@
       </div>
       <!-- Change board state -->
       <button onclick="permuteBoard(); StartTimer();">Shuffle the Board</button>
-      <button id="solver_button" onclick="(async () =>  {
+      <button id="solver_button" onclick="(async function() {
         if (! solver_started) {
           solver_promise = solve_Board_step_by_step();
           if (this.textContent == 'Solve the Board step-by-step') {
