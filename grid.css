@@ -46,12 +46,18 @@ body {
   margin: 1vmin 5vmin;
   margin-top: 3vmin;
   padding: 2vmin;
+  font-size: small;
   /* height: 10vh; */
   /* container-type: size; */
   background-color: white;
   border: 1vmin;
   border-radius: 1vmin;
   border-color: white;
+}
+
+/* Need to overwrite user agent stylesheet i guess */
+button {
+  font-size: inherit;
 }
 
 #board_size_controls {

@@ -14,6 +14,7 @@ var last_move_time = null;
 var solver_started = false;
 var abort_solver = false;
 var move_time = 100;
+var solver_promise = null;
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
@@ -164,6 +165,10 @@ function MakeBoard(w,h) {
 }
 
 const processTileClick = async (cur_tile, wait_time = null) => {
+  if (abort_solver) {
+    return;
+  }
+
   if (wait_time == null) {
     // Load default if not specified
     // This allows dynamic changing of the parameter
@@ -439,6 +444,9 @@ function checkIfSolved() {
 async function straight_movement(i,j, wait_time = null) {
   if (i == blank_pos[0]) {
     while(j != blank_pos[1]) {
+      if (abort_solver) {
+        return;
+      }
       if (j > blank_pos[1]) {
         // console.log(getTileAt(blank_pos[0], blank_pos[1]+1));
         await processTileClick(getTileAt(blank_pos[0], blank_pos[1]+1), wait_time);
@@ -449,6 +457,9 @@ async function straight_movement(i,j, wait_time = null) {
     }
   } else if (j == blank_pos[1]) {
     while(i != blank_pos[0]) {
+      if (abort_solver) {
+        return;
+      }
       if (i > blank_pos[0]) {
         await processTileClick(getTileAt(blank_pos[0]+1, blank_pos[1]), wait_time);
       } else {
@@ -514,6 +525,9 @@ async function rotateLoop(arr, n=1, wait_time = null) {
 
   var loops_completed = 0;
   while (loops_completed < n) {
+    if (abort_solver) {
+      return;
+    }
     next_segment = (blank_segment + 1) % arr.length
     await straight_movement(arr[next_segment][0], arr[next_segment][1], wait_time);
     if (next_segment == original_segment) {
@@ -548,6 +562,9 @@ async function rotate_2x2_Square(square_pos, n=1, wait_time = null) {
   var offset = blank_pos.map((e,i) => e - square_pos[i]);
   if (n > 0) {
     for (var i = 0; i < n; i++) {
+      if (abort_solver) {
+        return;
+      }
       if      (offset[0] == 0   && offset[1] == 0  ) {
         offset = [1,0];
       } 
@@ -565,6 +582,9 @@ async function rotate_2x2_Square(square_pos, n=1, wait_time = null) {
     }
   } else {
     for (var i = 0; i < -n; i++) {
+      if (abort_solver) {
+        return;
+      }
       if      (offset[0] == 0   && offset[1] == 0  ) {
         offset = [0,1];
       } 
@@ -584,12 +604,20 @@ async function rotate_2x2_Square(square_pos, n=1, wait_time = null) {
 }
 
 async function solve_Board_step_by_step() {
+  if (abort_solver) {
+    return;
+  }
+  var wait_time = null;
+
   var target_pos = [0,0];
   solver_started = true;
   timer_node.style.color = 'blue';
 
   // Last two rows need to be solved with different techniques
   while (target_pos[0] < n_rows-2) {
+    if (abort_solver) {
+      return;
+    }
     // if (abort_solver){
     //   abort_solver = false;
     //   return;
@@ -670,6 +698,10 @@ async function solve_Board_step_by_step() {
         }
       }
       await rotateLoop(loop, n_loops, wait_time);
+      
+      if (abort_solver) {
+        return;
+      }
       await processTileClick(target_tile, wait_time);
     }
     // Extra steps if the next pos is along the wall 
@@ -681,6 +713,10 @@ async function solve_Board_step_by_step() {
       //   #P_    =>    #_P
       //   000          000 
       var prev_tile = solved_state_list[target_pos[0] * n_cols + target_pos[1] - 1];
+      
+      if (abort_solver) {
+        return;
+      }
       await processTileClick(prev_tile, wait_time);
 
       // Move blank to the position below the prev tile
@@ -688,11 +724,17 @@ async function solve_Board_step_by_step() {
       //   #_P    =>    #0P
       //   000          00_ 
       await moveBlankToPos(target_pos[0]+1, target_pos[1], true, wait_time);
+      if (abort_solver) {
+        return;
+      }
       var cur_pos = target_tile.pos;
 
       // Case 1 : It is just below, perfectly positioned
       //          Just click it to solve
       if (cur_pos[0] == target_pos[0] + 1 && cur_pos[1] == target_pos[1]) {
+        if (abort_solver) {
+          return;
+        }
         await processTileClick(target_tile, wait_time);
       }
       // Case 2 : We just boxed it into the previous position
@@ -755,6 +797,9 @@ async function solve_Board_step_by_step() {
           n_loops = (target_pos[1] - cur_pos[1]) + (cur_pos[0] - target_pos[0]-1) - 1
         }
         await rotateLoop(loop, n_loops, wait_time);
+        if (abort_solver) {
+          return;
+        }
         await processTileClick(target_tile, wait_time);
 
         await move_Blank_To_Pos_While_Avoiding_Solved(target_pos[0]+1, target_pos[1]-1, wait_time);
@@ -822,6 +867,9 @@ async function solve_Board_step_by_step() {
       n_loops = (cur_pos_2[1] - target_pos[1]) + 1/*==(cur_pos_2[0] - target_pos[0])*/ - 1;
     }
     await rotateLoop(loop, n_loops, wait_time);
+    if (abort_solver) {
+      return;
+    }
     await processTileClick(target_2, wait_time);
 
     // Now we position target_1 i.e. the upper tile next to it 
@@ -871,6 +919,9 @@ async function solve_Board_step_by_step() {
         n_loops = (cur_pos_1[1] - target_pos[1]-1) + 1/*==(cur_pos_1[0] - target_pos[0])*/ - 1;
       }
       await rotateLoop(loop, n_loops, wait_time);
+      if (abort_solver) {
+        return;
+      }
       await processTileClick(target_1, wait_time);
       // Now we have
       //   ####
@@ -910,6 +961,7 @@ async function solve_Board_step_by_step() {
   }
 
   console.log("done with steps");
+  StopTimer();
   solver_started = false;
   move_time = 100;
 }
